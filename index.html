@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dowry Invitation – Leonard & Silvia</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #e8d5f5 0%, #d4b8e0 50%, #c9a8d4 100%);
+      font-family: 'Lato', sans-serif;
+      overflow: hidden;
+    }
+
+    /* ── SCENE ── */
+    .scene {
+      position: relative;
+      width: 360px;
+      height: 240px;
+      cursor: pointer;
+    }
+
+    /* ── ENVELOPE BODY ── */
+    .envelope {
+      position: absolute;
+      inset: 0;
+      background: #f3e8ff;
+      border-radius: 4px;
+      box-shadow: 0 12px 48px rgba(130, 80, 170, 0.35);
+      overflow: visible;
+    }
+
+    /* bottom-left & bottom-right triangles (envelope body sides) */
+    .env-left, .env-right, .env-bottom {
+      position: absolute;
+      bottom: 0;
+      width: 0;
+      height: 0;
+    }
+    .env-left {
+      left: 0;
+      border-style: solid;
+      border-width: 120px 0 0 180px;
+      border-color: transparent transparent transparent #dbb8f0;
+    }
+    .env-right {
+      right: 0;
+      border-style: solid;
+      border-width: 120px 180px 0 0;
+      border-color: transparent #dbb8f0 transparent transparent;
+    }
+    .env-bottom {
+      left: 0; right: 0; bottom: 0;
+      width: 100%; height: 50%;
+      background: #e4ccf7;
+      border-radius: 0 0 4px 4px;
+      z-index: 0;
+    }
+
+    /* ── FLAP (top triangle, rotates open) ── */
+    .flap-wrap {
+      position: absolute;
+      top: 0; left: 0;
+      width: 360px;
+      height: 120px;
+      transform-origin: top center;
+      transform-style: preserve-3d;
+      transition: transform 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 10;
+    }
+    .flap {
+      width: 0; height: 0;
+      border-style: solid;
+      border-width: 0 180px 120px 180px;
+      border-color: transparent transparent #c9a8d4 transparent;
+      filter: drop-shadow(0 2px 4px rgba(100,50,140,0.15));
+    }
+    /* wax seal on flap */
+    .seal {
+      position: absolute;
+      top: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 44px; height: 44px;
+      background: radial-gradient(circle at 40% 35%, #b57bee, #7b2d8b);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: #f3e8ff;
+      font-size: 1.1rem;
+      box-shadow: 0 2px 8px rgba(100,50,140,0.4);
+      z-index: 11;
+      transition: opacity 0.3s;
+    }
+
+    /* open state */
+    .scene.open .flap-wrap {
+      transform: rotateX(-180deg);
+    }
+    .scene.open .seal { opacity: 0; pointer-events: none; }
+
+    /* ── CLICK HINT ── */
+    .hint {
+      position: absolute;
+      bottom: -36px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #9b59b6;
+      white-space: nowrap;
+      animation: pulse 1.8s ease-in-out infinite;
+    }
+    @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+    .scene.open .hint { display: none; }
+
+    /* ── LETTER (rises out of envelope) ── */
+    .letter {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%) translateY(0);
+      bottom: 20px;
+      width: 320px;
+      background: #fff;
+      border-radius: 4px;
+      box-shadow: 0 4px 24px rgba(130,80,170,0.2);
+      z-index: 5;
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+      transition:
+        transform 1.1s cubic-bezier(0.4, 0, 0.2, 1) 0.6s,
+        opacity   0.7s cubic-bezier(0.4, 0, 0.2, 1) 0.6s;
+    }
+
+    /* risen state – letter peeks above envelope */
+    .scene.open .letter {
+      transform: translateX(-50%) translateY(-185px);
+      opacity: 1;
+    }
+
+    /* expanded state – letter becomes full card */
+    .scene.expanded .letter {
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%) !important;
+      width: min(520px, 96vw);
+      bottom: auto;
+      opacity: 1;
+      pointer-events: all;
+      z-index: 100;
+      box-shadow: 0 20px 72px rgba(100,50,140,0.4);
+      overflow-y: auto;
+      max-height: 96vh;
+      transition:
+        top    0.8s cubic-bezier(0.4, 0, 0.2, 1),
+        left   0.8s cubic-bezier(0.4, 0, 0.2, 1),
+        width  0.8s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.8s ease,
+        opacity    0.4s ease;
+    }
+
+    /* ── CARD CONTENT ── */
+    .band {
+      height: 8px;
+      background: linear-gradient(90deg, #b57bee, #9b59b6, #c39bd3, #b57bee);
+    }
+
+    .inner {
+      padding: 32px 32px 36px;
+      text-align: center;
+      border: 1px solid #e8d5f5;
+      margin: 14px;
+      border-radius: 2px;
+    }
+
+    .couple-photo {
+      display: block;
+      width: auto;
+      max-width: 100%;
+      max-height: 220px;
+      object-fit: contain;
+      object-position: top center;
+      border-radius: 4px;
+      margin: 0 auto 24px;
+    }
+
+    .label {
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      text-transform: uppercase;
+      color: #9b59b6;
+      margin-bottom: 4px;
+    }
+    .title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.9rem;
+      color: #6a1b9a;
+      line-height: 1.2;
+      margin-bottom: 2px;
+    }
+    .subtitle {
+      font-size: 0.7rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #ab7bc8;
+      margin-bottom: 24px;
+    }
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 16px 0;
+      color: #c39bd3;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #c39bd3, transparent);
+    }
+    .names {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.45rem;
+      color: #6a1b9a;
+      line-height: 1.5;
+    }
+    .names .amp {
+      font-style: italic;
+      font-size: 1.1rem;
+      color: #ab7bc8;
+      display: block;
+      margin: 2px 0;
+    }
+    .details {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 36px;
+      flex-wrap: wrap;
+    }
+    .detail-block { text-align: center; }
+    .detail-icon { font-size: 1.2rem; margin-bottom: 2px; }
+    .detail-label {
+      font-size: 0.6rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #ab7bc8;
+      margin-bottom: 2px;
+    }
+    .detail-value {
+      font-family: 'Playfair Display', serif;
+      font-size: 0.9rem;
+      color: #6a1b9a;
+      font-weight: 700;
+    }
+    .footer-note {
+      margin-top: 28px;
+      font-size: 0.75rem;
+      color: #ab7bc8;
+      font-style: italic;
+      line-height: 1.7;
+    }
+    .bottom-ornament {
+      margin-top: 20px;
+      font-size: 1rem;
+      color: #c39bd3;
+      letter-spacing: 8px;
+    }
+
+    /* overlay backdrop when expanded */
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(80, 30, 110, 0.45);
+      backdrop-filter: blur(4px);
+      z-index: 99;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .scene.expanded ~ .backdrop {
+      opacity: 1;
+      pointer-events: all;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="scene" id="scene">
+
+    <!-- Envelope body -->
+    <div class="envelope">
+      <div class="env-bottom"></div>
+      <div class="env-left"></div>
+      <div class="env-right"></div>
+    </div>
+
+    <!-- Flap -->
+    <div class="flap-wrap">
+      <div class="flap"></div>
+      <div class="seal">❧</div>
+    </div>
+
+    <!-- Letter / Card -->
+    <div class="letter" id="letter">
+      <div class="band"></div>
+      <div class="inner">
+        <img class="couple-photo" src="The Couple's picture.png" alt="Leonard & Silvia"/>
+
+        <p class="label">You are cordially invited to</p>
+        <h1 class="title">Ruracio</h1>
+        <p class="subtitle">Dowry Ceremony</p>
+
+        <div class="divider">❧</div>
+
+        <div class="names">
+          LEONARD NJENGA
+          <span class="amp">&amp;</span>
+          SILVIA KITETO
+        </div>
+
+        <div class="divider">❧</div>
+
+        <div class="details">
+          <div class="detail-block">
+            <div class="detail-icon">📅</div>
+            <div class="detail-label">Date</div>
+            <div class="detail-value">18th April 2026</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-icon">🕙</div>
+            <div class="detail-label">Time</div>
+            <div class="detail-value">10:00 AM</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-icon">📍</div>
+            <div class="detail-label">Venue</div>
+            <div class="detail-value">Mbololo Mwakiki</div>
+          </div>
+          <div class="detail-block">
+            <div class="detail-icon">👗</div>
+            <div class="detail-label">Dress Code</div>
+            <div class="detail-value">Lilac / Lavender</div>
+          </div>
+        </div>
+
+        <p class="footer-note">
+          Join us as we celebrate this joyous union<br/>
+          and the beginning of a beautiful journey together.
+        </p>
+
+        <div class="bottom-ornament">✦ ✦ ✦</div>
+      </div>
+    </div>
+
+    <p class="hint">tap to open</p>
+  </div>
+
+  <div class="backdrop" id="backdrop"></div>
+
+  <script>
+    const scene = document.getElementById('scene');
+    const letter = document.getElementById('letter');
+
+    scene.addEventListener('click', () => {
+      if (!scene.classList.contains('open')) {
+        // Step 1: open flap + letter rises
+        scene.classList.add('open');
+
+        // Step 2: after letter has risen, expand to full card
+        setTimeout(() => {
+          scene.classList.add('expanded');
+          // make scene non-interactive so backdrop click works
+          scene.style.pointerEvents = 'none';
+        }, 1800);
+      }
+    });
+
+    document.getElementById('backdrop').addEventListener('click', () => {
+      scene.classList.remove('expanded', 'open');
+      scene.style.pointerEvents = '';
+    });
+  </script>
+</body>
+</html>
